@@ -79,62 +79,66 @@ Your data never leaves your device.
 ## ▶️ Running the App
 
 ### Option 1: Open directly
-1. Download the project files
-2. Keep all files in the same folder
-3. Open `index.html` in Chrome or Firefox
+1. Download the project files  
+2. Keep all files in the same folder  
+3. Open `index.html` in Chrome or Firefox  
 
 ### Option 2: Local server (recommended)
 ```bash
 python -m http.server
 ```
+
 Then open:
+```
 http://localhost:8000
-📈 How Accuracy Is Calculated
+```
 
+---
+
+## 📈 How Accuracy Is Calculated
+
+```text
 accuracy = correct_answers / total_answers
-Daily stats are merged, so multiple sessions in the same day count toward the same daily summary.
+```
 
-🎯 Project Philosophy
-Simple > flashy
+Daily stats are **merged**, so multiple sessions in the same day count toward the same daily summary.
 
-Offline-first
+---
 
-Habit-forming
+## 🎯 Project Philosophy
 
-Minimal friction
-
-Data-driven improvement
+- Simple > flashy  
+- Offline-first  
+- Habit-forming  
+- Minimal friction  
+- Data-driven improvement  
 
 Inspired by:
+- Kumon methodology
+- Al-Khwarizmi (foundations of algebra)
+- Modern learning UX (Duolingo-style feedback)
 
-Kumon methodology
+---
 
-Al-Khwarizmi (foundations of algebra)
+## 🚀 Roadmap Ideas
 
-Modern learning UX (Duolingo-style feedback)
+- Per-operation analytics (+ / − / × / ÷)
+- Adaptive difficulty
+- Session results screen (instead of alerts)
+- Cloud sync (Supabase / Firebase)
+- Android app packaging (Capacitor)
+- iOS support
+- React migration
 
-🚀 Roadmap Ideas
-Per-operation analytics (+ / − / × / ÷)
+---
 
-Adaptive difficulty
+## 📜 License
 
-Session results screen (instead of alerts)
-
-Cloud sync (Supabase / Firebase)
-
-Android app packaging (Capacitor)
-
-iOS support
-
-React migration
-
-📜 License
 Personal project / educational use.
 
 Feel free to fork, modify, and experiment.
 
-Train your brain.
-One problem at a time. 🧠✨
+---
 
-yaml
-Copy code
+**Train your brain.**  
+**One problem at a time. 🧠✨**
