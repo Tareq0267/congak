@@ -13,6 +13,11 @@
  * v1.5 additions:
  * - Replaced "Badges Earned" chart with "Buzzer Beater Average"
  *   -> avg questions per buzzer session per day
+ *
+ * v1.6 additions:
+ * - Switched positions:
+ *   -> Main page is Session Setup
+ *   -> Dashboard is now a popup modal
  ************************/
 
 /* --------------------- Utils --------------------- */
@@ -213,14 +218,14 @@ function genQuestion(ops, difficulty) {
 }
 
 /* --------------------- DOM refs --------------------- */
-const dashSec = document.getElementById("dashboard");
+const setupSec = document.getElementById("setup");
 const gameSec = document.getElementById("game");
 
-/* Setup modal */
-const modal = document.getElementById("setup-modal");
-const openSetupBtn = document.getElementById("open-setup");
-const closeSetupBtn = document.getElementById("close-setup");
-const backdrop = document.getElementById("setup-backdrop");
+/* Dashboard modal */
+const dashboardModal = document.getElementById("dashboard-modal");
+const openDashboardBtn = document.getElementById("open-dashboard");
+const closeDashboardBtn = document.getElementById("close-dashboard");
+const dashboardBackdrop = document.getElementById("dashboard-backdrop");
 
 /* Game UI */
 const questionEl = document.getElementById("question");
@@ -260,27 +265,43 @@ function playFeedbackAnimation(isCorrect) {
   }, 500);
 }
 
+/* --------------------- Dashboard modal controls --------------------- */
+let dashboardDirty = true;
 
-/* --------------------- Modal controls --------------------- */
-function openSetup() {
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
+function openDashboard() {
+  dashboardModal.classList.remove("hidden");
+  dashboardModal.setAttribute("aria-hidden", "false");
+  ensureCharts();
+  // render charts only when visible (echarts hates display:none)
+  renderChartsAndSummary().then(resizeChartsSoon);
+  dashboardDirty = false;
 }
 
-function closeSetup() {
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
+function closeDashboard() {
+  dashboardModal.classList.add("hidden");
+  dashboardModal.setAttribute("aria-hidden", "true");
 }
 
-openSetupBtn?.addEventListener("click", openSetup);
-closeSetupBtn?.addEventListener("click", closeSetup);
-backdrop?.addEventListener("click", closeSetup);
+openDashboardBtn?.addEventListener("click", openDashboard);
+closeDashboardBtn?.addEventListener("click", closeDashboard);
+dashboardBackdrop?.addEventListener("click", closeDashboard);
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeSetup();
+  if (e.key === "Escape") closeDashboard();
 });
 
 /* --------------------- Sections --------------------- */
+function showSetup() {
+  setupSec.classList.remove("hidden");
+  gameSec.classList.add("hidden");
+}
+
+function showGame() {
+  setupSec.classList.add("hidden");
+  gameSec.classList.remove("hidden");
+}
+
+/* --------------------- Charts --------------------- */
 let chartAcc = null;
 let chartAtt = null;
 let chartSpd = null;
@@ -313,19 +334,6 @@ window.addEventListener("resize", () => {
   chartSpd?.resize();
   chartBad?.resize();
 });
-
-async function showDashboard() {
-  dashSec.classList.remove("hidden");
-  gameSec.classList.add("hidden");
-  ensureCharts();
-  await renderChartsAndSummary();
-  resizeChartsSoon();
-}
-
-function showGame() {
-  dashSec.classList.add("hidden");
-  gameSec.classList.remove("hidden");
-}
 
 /* --------------------- Game state --------------------- */
 let session = null;
@@ -527,7 +535,7 @@ async function endSession(reason = "Session ended") {
 
   if (!session || session.total === 0) {
     session = null;
-    await showDashboard();
+    showSetup();
     return;
   }
 
@@ -616,10 +624,21 @@ async function endSession(reason = "Session ended") {
 
   await putDailyStat(base);
 
-  // reset session + show dashboard (and update charts after dashboard is visible)
+  // reset session + return to setup (dashboard is now a popup)
   session = null;
-  await showDashboard();
+  showSetup();
   renderBadgeList(unlockedAfter);
+
+  // mark dashboard as needing refresh
+  dashboardDirty = true;
+
+  // if dashboard happens to be open, refresh it immediately
+  if (!dashboardModal.classList.contains("hidden")) {
+    ensureCharts();
+    await renderChartsAndSummary();
+    resizeChartsSoon();
+    dashboardDirty = false;
+  }
 
   alert(
     `${reason}\n\n` +
@@ -628,10 +647,10 @@ async function endSession(reason = "Session ended") {
   );
 }
 
-/* --------------------- Start session from modal --------------------- */
+/* --------------------- Start session from main setup --------------------- */
 document.getElementById("start")?.addEventListener("click", async () => {
-  // Only look inside the modal for checked ops
-  const ops = [...document.querySelectorAll('#setup-modal input[type="checkbox"]:checked')].map(c => c.value);
+  // Only look inside setup section for checked ops
+  const ops = [...document.querySelectorAll('#setup input[type="checkbox"]:checked')].map(c => c.value);
   if (!ops.length) return alert("Select at least one operation.");
 
   const mode = document.getElementById("mode").value;
@@ -656,8 +675,6 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   };
 
-  // Close modal BEFORE showing game
-  closeSetup();
   showGame();
   startCountdownIfNeeded();
   nextQuestion();
@@ -723,7 +740,7 @@ async function renderChartsAndSummary() {
   }, true);
 
   chartBad.setOption({
-    title: { text: "Buzzer Beater Avg (questions per session)" },
+    title: { text: "Buzzer Avg (questions per session)" },
     xAxis: { type: "category", data: dates },
     yAxis: { type: "value", min: 0 },
     tooltip: { trigger: "axis" },
@@ -743,21 +760,18 @@ async function renderChartsAndSummary() {
 
   sum.textContent =
     `Attempts: ${total7} • Accuracy: ${Math.round(acc7 * 100)}% • Avg time: ${avgMs7 ? msToSec(avgMs7) : "—"}s • Buzzer avg: ${buzzerAvg7 ? buzzerAvg7.toFixed(1) : "—"}`;
-
-  resizeChartsSoon();
 }
 
 /* --------------------- Init --------------------- */
 (async function init() {
   await openDB();
 
-  // Home screen is dashboard
-  await showDashboard();
+  // Home screen is setup now
+  showSetup();
 
   const unlocked = await getUnlockedBadgeIds();
   renderBadgeList(unlocked);
 
-  // Open setup on first ever visit
-  const stats = await getAllStats();
-  if (!stats.length) openSetup();
+  // Dashboard will render when opened (popup)
+  // But if user opens it immediately, we’ll be ready.
 })();
