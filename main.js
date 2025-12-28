@@ -5,6 +5,10 @@
  * - Fix: modal hide works reliably
  * - Fix: ECharts updates correctly after sessions (init once + resize after show)
  * - IndexedDB: daily merged stats + meta for badges
+ *
+ * v1.4 additions:
+ * - New mode: buzzer (Buzzer Beater) -> fixed 5 minutes for now
+ * - Keeps Duolingo-style feedback animations (green glow / red shake)
  ************************/
 
 /* --------------------- Utils --------------------- */
@@ -252,7 +256,6 @@ function playFeedbackAnimation(isCorrect) {
   }, 500);
 }
 
-
 /* --------------------- Modal controls --------------------- */
 function openSetup() {
   modal.classList.remove("hidden");
@@ -403,10 +406,19 @@ document.addEventListener("keydown", (e) => {
 /* --------------------- Session flow --------------------- */
 function updatePills() {
   if (!session) return;
-  modePill.textContent = `Mode: ${session.mode} • ${session.difficulty}`;
-  progressPill.textContent = (session.mode === "kumon")
-    ? `Progress: ${session.total}/20`
-    : `Answered: ${session.total}`;
+
+  // Show slightly nicer labels, but keep original values
+  const modeLabel = session.mode === "buzzer" ? "buzzer (5:00)" : session.mode;
+  modePill.textContent = `Mode: ${modeLabel} • ${session.difficulty}`;
+
+  if (session.mode === "kumon") {
+    progressPill.textContent = `Progress: ${session.total}/20`;
+  } else if (session.mode === "buzzer") {
+    progressPill.textContent = `Solved: ${session.total}`;
+  } else {
+    progressPill.textContent = `Answered: ${session.total}`;
+  }
+
   timerPill.textContent = (session.timerSec > 0)
     ? `Time: ${countdownRemaining}s`
     : `Time: ∞`;
@@ -419,7 +431,7 @@ function stopCountdown() {
 
 function startCountdownIfNeeded() {
   stopCountdown();
-  if (session.timerSec <= 0) return;
+  if (!session || session.timerSec <= 0) return;
 
   countdownRemaining = session.timerSec;
   updatePills();
@@ -429,7 +441,13 @@ function startCountdownIfNeeded() {
     if (countdownRemaining <= 0) {
       countdownRemaining = 0;
       updatePills();
-      endSession("⏱️ Time's up!");
+
+      // buzzer ends automatically at 0
+      if (session?.mode === "buzzer") {
+        endSession("⏱️ Buzzer Beater finished!");
+      } else {
+        endSession("⏱️ Time's up!");
+      }
       return;
     }
     updatePills();
@@ -453,7 +471,6 @@ function submitAnswer() {
   const isCorrect = userAnswer === currentQ.answer;
   playFeedbackAnimation(isCorrect);
 
-
   session.total += 1;
   if (isCorrect) session.correct += 1;
   session.totalTimeMs += elapsed;
@@ -470,6 +487,7 @@ function submitAnswer() {
     return;
   }
 
+  // buzzer: continue until countdown ends
   setTimeout(nextQuestion, 180);
 }
 
@@ -525,7 +543,7 @@ async function endSession(reason = "Session ended") {
       "*": { total: 0, correct: 0, timeMs: 0 },
       "/": { total: 0, correct: 0, timeMs: 0 },
     },
-    modeCount: { kumon: 0, endless: 0 },
+    modeCount: { kumon: 0, endless: 0, buzzer: 0 },
     badgesEarned: 0,
   };
 
@@ -585,9 +603,15 @@ document.getElementById("start")?.addEventListener("click", async () => {
   const ops = [...document.querySelectorAll('#setup-modal input[type="checkbox"]:checked')].map(c => c.value);
   if (!ops.length) return alert("Select at least one operation.");
 
+  const mode = document.getElementById("mode").value;
+
+  // buzzer beater: fixed 5 minutes for now
+  const userTimer = clamp(Number(document.getElementById("timer").value || 0), 0, 3600);
+  const effectiveTimer = (mode === "buzzer") ? 60 : userTimer;
+
   session = {
-    mode: document.getElementById("mode").value,
-    timerSec: clamp(Number(document.getElementById("timer").value || 0), 0, 3600),
+    mode,
+    timerSec: effectiveTimer,
     difficulty: document.getElementById("difficulty").value,
     ops,
     total: 0,
