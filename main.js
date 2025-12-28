@@ -505,7 +505,7 @@ function submitAnswer() {
   const elapsed = performance.now() - qStartMs;
   const userAnswer = Number(buffer);
   const isCorrect = userAnswer === currentQ.answer;
-  
+
   // play sound
   if (Sound.enabled) {
     const s = isCorrect ? Sound.correct : Sound.wrong;
@@ -676,7 +676,6 @@ async function endSession(reason = "Session ended") {
     Sound.end.currentTime = 0;
     Sound.end.play().catch(() => {});
   }
-
 
   alert(
     `${reason}\n\n` +
