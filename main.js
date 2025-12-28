@@ -5,6 +5,19 @@
  * - Fix: modal hide works reliably
  * - Fix: ECharts updates correctly after sessions (init once + resize after show)
  * - IndexedDB: daily merged stats + meta for badges
+ *
+ * v1.4 additions:
+ * - New mode: buzzer (Buzzer Beater) -> fixed 1 minute for now
+ * - Keeps Duolingo-style feedback animations (green glow / red shake)
+ *
+ * v1.5 additions:
+ * - Replaced "Badges Earned" chart with "Buzzer Beater Average"
+ *   -> avg questions per buzzer session per day
+ *
+ * v1.6 additions:
+ * - Switched positions:
+ *   -> Main page is Session Setup
+ *   -> Dashboard is now a popup modal
  ************************/
 
 /* --------------------- Utils --------------------- */
@@ -205,14 +218,14 @@ function genQuestion(ops, difficulty) {
 }
 
 /* --------------------- DOM refs --------------------- */
-const dashSec = document.getElementById("dashboard");
+const setupSec = document.getElementById("setup");
 const gameSec = document.getElementById("game");
 
-/* Setup modal */
-const modal = document.getElementById("setup-modal");
-const openSetupBtn = document.getElementById("open-setup");
-const closeSetupBtn = document.getElementById("close-setup");
-const backdrop = document.getElementById("setup-backdrop");
+/* Dashboard modal */
+const dashboardModal = document.getElementById("dashboard-modal");
+const openDashboardBtn = document.getElementById("open-dashboard");
+const closeDashboardBtn = document.getElementById("close-dashboard");
+const dashboardBackdrop = document.getElementById("dashboard-backdrop");
 
 /* Game UI */
 const questionEl = document.getElementById("question");
@@ -252,31 +265,47 @@ function playFeedbackAnimation(isCorrect) {
   }, 500);
 }
 
+/* --------------------- Dashboard modal controls --------------------- */
+let dashboardDirty = true;
 
-/* --------------------- Modal controls --------------------- */
-function openSetup() {
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
+function openDashboard() {
+  dashboardModal.classList.remove("hidden");
+  dashboardModal.setAttribute("aria-hidden", "false");
+  ensureCharts();
+  // render charts only when visible (echarts hates display:none)
+  renderChartsAndSummary().then(resizeChartsSoon);
+  dashboardDirty = false;
 }
 
-function closeSetup() {
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
+function closeDashboard() {
+  dashboardModal.classList.add("hidden");
+  dashboardModal.setAttribute("aria-hidden", "true");
 }
 
-openSetupBtn?.addEventListener("click", openSetup);
-closeSetupBtn?.addEventListener("click", closeSetup);
-backdrop?.addEventListener("click", closeSetup);
+openDashboardBtn?.addEventListener("click", openDashboard);
+closeDashboardBtn?.addEventListener("click", closeDashboard);
+dashboardBackdrop?.addEventListener("click", closeDashboard);
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeSetup();
+  if (e.key === "Escape") closeDashboard();
 });
 
 /* --------------------- Sections --------------------- */
+function showSetup() {
+  setupSec.classList.remove("hidden");
+  gameSec.classList.add("hidden");
+}
+
+function showGame() {
+  setupSec.classList.add("hidden");
+  gameSec.classList.remove("hidden");
+}
+
+/* --------------------- Charts --------------------- */
 let chartAcc = null;
 let chartAtt = null;
 let chartSpd = null;
-let chartBad = null;
+let chartBad = null; // we reuse this container for buzzer average chart now
 
 function ensureCharts() {
   const elAcc = document.getElementById("chart-accuracy");
@@ -305,19 +334,6 @@ window.addEventListener("resize", () => {
   chartSpd?.resize();
   chartBad?.resize();
 });
-
-async function showDashboard() {
-  dashSec.classList.remove("hidden");
-  gameSec.classList.add("hidden");
-  ensureCharts();
-  await renderChartsAndSummary();
-  resizeChartsSoon();
-}
-
-function showGame() {
-  dashSec.classList.add("hidden");
-  gameSec.classList.remove("hidden");
-}
 
 /* --------------------- Game state --------------------- */
 let session = null;
@@ -403,10 +419,19 @@ document.addEventListener("keydown", (e) => {
 /* --------------------- Session flow --------------------- */
 function updatePills() {
   if (!session) return;
-  modePill.textContent = `Mode: ${session.mode} • ${session.difficulty}`;
-  progressPill.textContent = (session.mode === "kumon")
-    ? `Progress: ${session.total}/20`
-    : `Answered: ${session.total}`;
+
+  // Show slightly nicer labels, but keep original values
+  const modeLabel = session.mode === "buzzer" ? "buzzer (1:00)" : session.mode;
+  modePill.textContent = `Mode: ${modeLabel} • ${session.difficulty}`;
+
+  if (session.mode === "kumon") {
+    progressPill.textContent = `Progress: ${session.total}/20`;
+  } else if (session.mode === "buzzer") {
+    progressPill.textContent = `Solved: ${session.total}`;
+  } else {
+    progressPill.textContent = `Answered: ${session.total}`;
+  }
+
   timerPill.textContent = (session.timerSec > 0)
     ? `Time: ${countdownRemaining}s`
     : `Time: ∞`;
@@ -419,7 +444,7 @@ function stopCountdown() {
 
 function startCountdownIfNeeded() {
   stopCountdown();
-  if (session.timerSec <= 0) return;
+  if (!session || session.timerSec <= 0) return;
 
   countdownRemaining = session.timerSec;
   updatePills();
@@ -429,7 +454,13 @@ function startCountdownIfNeeded() {
     if (countdownRemaining <= 0) {
       countdownRemaining = 0;
       updatePills();
-      endSession("⏱️ Time's up!");
+
+      // buzzer ends automatically at 0
+      if (session?.mode === "buzzer") {
+        endSession("⏱️ Buzzer Beater finished!");
+      } else {
+        endSession("⏱️ Time's up!");
+      }
       return;
     }
     updatePills();
@@ -453,7 +484,6 @@ function submitAnswer() {
   const isCorrect = userAnswer === currentQ.answer;
   playFeedbackAnimation(isCorrect);
 
-
   session.total += 1;
   if (isCorrect) session.correct += 1;
   session.totalTimeMs += elapsed;
@@ -470,6 +500,7 @@ function submitAnswer() {
     return;
   }
 
+  // buzzer: continue until countdown ends
   setTimeout(nextQuestion, 180);
 }
 
@@ -504,7 +535,7 @@ async function endSession(reason = "Session ended") {
 
   if (!session || session.total === 0) {
     session = null;
-    await showDashboard();
+    showSetup();
     return;
   }
 
@@ -525,15 +556,41 @@ async function endSession(reason = "Session ended") {
       "*": { total: 0, correct: 0, timeMs: 0 },
       "/": { total: 0, correct: 0, timeMs: 0 },
     },
-    modeCount: { kumon: 0, endless: 0 },
+    modeCount: { kumon: 0, endless: 0, buzzer: 0 },
+    // modeAgg tracks totals per mode (used for buzzer average chart)
+    modeAgg: {
+      kumon: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+      endless: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+      buzzer: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+    },
     badgesEarned: 0,
   };
+
+  // Backwards compatibility: old saved days won't have modeAgg
+  if (!base.modeAgg) {
+    base.modeAgg = {
+      kumon: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+      endless: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+      buzzer: { sessions: 0, total: 0, correct: 0, timeMs: 0 },
+    };
+  }
+  if (!base.modeCount) base.modeCount = { kumon: 0, endless: 0, buzzer: 0 };
+  if (!base.modeCount.buzzer) base.modeCount.buzzer = 0;
 
   base.total += session.total;
   base.correct += session.correct;
   base.totalTimeMs += session.totalTimeMs;
   base.sessions += 1;
   base.modeCount[session.mode] = (base.modeCount[session.mode] || 0) + 1;
+
+  // accumulate per-mode stats for buzzer average (and future analytics)
+  if (!base.modeAgg[session.mode]) {
+    base.modeAgg[session.mode] = { sessions: 0, total: 0, correct: 0, timeMs: 0 };
+  }
+  base.modeAgg[session.mode].sessions += 1;
+  base.modeAgg[session.mode].total += session.total;
+  base.modeAgg[session.mode].correct += session.correct;
+  base.modeAgg[session.mode].timeMs += session.totalTimeMs;
 
   for (const op of Object.keys(base.perOp)) {
     base.perOp[op].total += session.perOp[op].total;
@@ -567,10 +624,21 @@ async function endSession(reason = "Session ended") {
 
   await putDailyStat(base);
 
-  // reset session + show dashboard (and update charts after dashboard is visible)
+  // reset session + return to setup (dashboard is now a popup)
   session = null;
-  await showDashboard();
+  showSetup();
   renderBadgeList(unlockedAfter);
+
+  // mark dashboard as needing refresh
+  dashboardDirty = true;
+
+  // if dashboard happens to be open, refresh it immediately
+  if (!dashboardModal.classList.contains("hidden")) {
+    ensureCharts();
+    await renderChartsAndSummary();
+    resizeChartsSoon();
+    dashboardDirty = false;
+  }
 
   alert(
     `${reason}\n\n` +
@@ -579,15 +647,21 @@ async function endSession(reason = "Session ended") {
   );
 }
 
-/* --------------------- Start session from modal --------------------- */
+/* --------------------- Start session from main setup --------------------- */
 document.getElementById("start")?.addEventListener("click", async () => {
-  // Only look inside the modal for checked ops
-  const ops = [...document.querySelectorAll('#setup-modal input[type="checkbox"]:checked')].map(c => c.value);
+  // Only look inside setup section for checked ops
+  const ops = [...document.querySelectorAll('#setup input[type="checkbox"]:checked')].map(c => c.value);
   if (!ops.length) return alert("Select at least one operation.");
 
+  const mode = document.getElementById("mode").value;
+
+  // buzzer beater: fixed 1 minute for now
+  const userTimer = clamp(Number(document.getElementById("timer").value || 0), 0, 3600);
+  const effectiveTimer = (mode === "buzzer") ? 60 : userTimer;
+
   session = {
-    mode: document.getElementById("mode").value,
-    timerSec: clamp(Number(document.getElementById("timer").value || 0), 0, 3600),
+    mode,
+    timerSec: effectiveTimer,
     difficulty: document.getElementById("difficulty").value,
     ops,
     total: 0,
@@ -601,8 +675,6 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   };
 
-  // Close modal BEFORE showing game
-  closeSetup();
   showGame();
   startCountdownIfNeeded();
   nextQuestion();
@@ -621,7 +693,7 @@ async function renderChartsAndSummary() {
   const accuracy = [];
   const attempts = [];
   const avgTime = [];
-  const badgeEarned = [];
+  const buzzerAvg = []; // replaces badges-earned chart
 
   for (const dt of dates) {
     const d = map.get(dt);
@@ -632,7 +704,13 @@ async function renderChartsAndSummary() {
     accuracy.push(Number((acc * 100).toFixed(1)));
     attempts.push(tot);
     avgTime.push(d?.avgTimeMs ? Math.round(d.avgTimeMs) : 0);
-    badgeEarned.push(d?.badgesEarned || 0);
+
+    // avg questions per buzzer session for this day
+    const modeAgg = d?.modeAgg;
+    const b = modeAgg?.buzzer;
+    const bSessions = b?.sessions || 0;
+    const bTotal = b?.total || 0;
+    buzzerAvg.push(bSessions > 0 ? Number((bTotal / bSessions).toFixed(1)) : 0);
   }
 
   ensureCharts();
@@ -662,11 +740,11 @@ async function renderChartsAndSummary() {
   }, true);
 
   chartBad.setOption({
-    title: { text: "Badges Earned (last 7 days)" },
+    title: { text: "Buzzer Avg (questions per session)" },
     xAxis: { type: "category", data: dates },
-    yAxis: { type: "value", minInterval: 1, min: 0 },
+    yAxis: { type: "value", min: 0 },
     tooltip: { trigger: "axis" },
-    series: [{ type: "bar", data: badgeEarned }],
+    series: [{ type: "bar", data: buzzerAvg }],
   }, true);
 
   const sum = document.getElementById("summary");
@@ -677,25 +755,23 @@ async function renderChartsAndSummary() {
   const avgMsNonZero = dates.map(dt => map.get(dt)?.avgTimeMs || 0).filter(x => x > 0);
   const avgMs7 = avgMsNonZero.length ? avgMsNonZero.reduce((a, b) => a + b, 0) / avgMsNonZero.length : 0;
 
-  const badges7 = badgeEarned.reduce((a, b) => a + b, 0);
+  const buzzerDays = buzzerAvg.filter(x => x > 0);
+  const buzzerAvg7 = buzzerDays.length ? (buzzerDays.reduce((a,b)=>a+b,0) / buzzerDays.length) : 0;
 
   sum.textContent =
-    `Attempts: ${total7} • Accuracy: ${Math.round(acc7 * 100)}% • Avg time: ${avgMs7 ? msToSec(avgMs7) : "—"}s • Badges earned: ${badges7}`;
-
-  resizeChartsSoon();
+    `Attempts: ${total7} • Accuracy: ${Math.round(acc7 * 100)}% • Avg time: ${avgMs7 ? msToSec(avgMs7) : "—"}s • Buzzer avg: ${buzzerAvg7 ? buzzerAvg7.toFixed(1) : "—"}`;
 }
 
 /* --------------------- Init --------------------- */
 (async function init() {
   await openDB();
 
-  // Home screen is dashboard
-  await showDashboard();
+  // Home screen is setup now
+  showSetup();
 
   const unlocked = await getUnlockedBadgeIds();
   renderBadgeList(unlocked);
 
-  // Open setup on first ever visit
-  const stats = await getAllStats();
-  if (!stats.length) openSetup();
+  // Dashboard will render when opened (popup)
+  // But if user opens it immediately, we’ll be ready.
 })();
