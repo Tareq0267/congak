@@ -3,104 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mental Math Trainer</title>
+  <title>Pocket Kumon / Pocket Al-Khwarizmi</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 </head>
 <body>
+
   <header class="topbar">
-    <h1>Pocket Kumon</h1>
-    <div class="topbar-actions">
-      <button id="open-setup" class="primary small">New Session</button>
+    <div class="brand">
+      <div class="brand-title">Pocket Kumon</div>
+      <div class="brand-sub">Pocket Al-Khwarizmi</div>
     </div>
+
+    <button id="open-dashboard" class="btn ghost">Dashboard</button>
   </header>
 
-  <main>
-    <!-- Dashboard ALWAYS visible -->
-    <section id="dashboard">
-      <h2>Dashboard</h2>
-
-      <div class="grid">
-        <div class="card"><div id="chart-accuracy" class="chart"></div></div>
-        <div class="card"><div id="chart-attempts" class="chart"></div></div>
-        <div class="card"><div id="chart-speed" class="chart"></div></div>
-        <div class="card"><div id="chart-badges" class="chart"></div></div>
+  <!-- MAIN PAGE: SESSION SETUP (was popup before) -->
+  <section id="setup" class="setup-page">
+    <div class="card">
+      <div class="card-header">
+        <h2>Session Setup</h2>
+        <p class="muted">Pick a mode + operations, then start.</p>
       </div>
 
-      <div class="card">
-        <h3>Recent Summary (last 7 days)</h3>
-        <div id="summary" class="summary"></div>
-      </div>
+      <div class="form">
+        <label class="label">Mode</label>
+        <select id="mode" class="input">
+          <option value="kumon">Kumon (20 questions)</option>
+          <option value="endless">Endless</option>
+          <option value="buzzer">Buzzer Beater (1:00)</option>
+        </select>
 
-      <div class="card">
-        <h3>Unlocked Badges</h3>
-        <div id="badge-list" class="badge-list"></div>
-      </div>
-    </section>
+        <label class="label">Difficulty</label>
+        <select id="difficulty" class="input">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
 
-    <!-- Game screen (shown during a session) -->
-    <section id="game" class="hidden">
-      <div class="game-header">
-        <div class="pill" id="mode-pill"></div>
-        <div class="pill" id="progress-pill"></div>
-        <div class="pill" id="timer-pill"></div>
-      </div>
-
-      <div class="card big">
-        <div id="question" class="question">—</div>
-        <div id="answer" class="answer">0</div>
-        <div id="feedback" class="feedback"></div>
-      </div>
-
-      <div id="numpad" class="numpad"></div>
-
-      <button id="end" class="danger">End Session</button>
-    </section>
-  </main>
-
-  <!-- Setup Modal -->
-  <div id="setup-modal" class="modal hidden" aria-hidden="true">
-    <div class="modal-backdrop" id="setup-backdrop"></div>
-
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="setup-title">
-      <div class="modal-header">
-        <h2 id="setup-title">Session Setup</h2>
-        <button id="close-setup" class="ghost small">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <label class="row">
-          <span>Mode</span>
-          <select id="mode">
-            <option value="kumon">Kumon (20 questions)</option>
-            <option value="endless">Endless</option>
-          </select>
-        </label>
-
-        <label class="row">
-          <span>Timer (seconds)</span>
-          <input type="number" id="timer" value="0" min="0" />
-        </label>
-
-        <label class="row">
-          <span>Difficulty</span>
-          <select id="difficulty">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-        </label>
-
+        <label class="label">Operations</label>
         <div class="ops">
-          <div class="ops-title">Operations</div>
-          <label><input type="checkbox" value="+" checked> <span>+</span></label>
-          <label><input type="checkbox" value="-" checked> <span>−</span></label>
-          <label><input type="checkbox" value="*" checked> <span>×</span></label>
-          <label><input type="checkbox" value="/" checked> <span>÷</span></label>
+          <label class="chip"><input type="checkbox" value="+" checked /> <span>+</span></label>
+          <label class="chip"><input type="checkbox" value="-" /> <span>−</span></label>
+          <label class="chip"><input type="checkbox" value="*" /> <span>×</span></label>
+          <label class="chip"><input type="checkbox" value="/" /> <span>÷</span></label>
         </div>
 
-        <button id="start" class="primary">Start</button>
-        <div class="hint">Tip: Use ↵ to submit. Kumon ends at 20 questions.</div>
+        <label class="label">Timer (seconds, 0 = none)</label>
+        <input id="timer" class="input" type="number" min="0" value="0" />
+
+        <button id="start" class="btn primary">Start Session</button>
+
+        <div class="hint muted">
+          Tip: Buzzer Beater is fixed at <strong>60 seconds</strong> (timer input ignored).
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <h3>Badges</h3>
+        <div id="badge-list" class="badge-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="hidden">
+    <div class="game-top">
+      <div id="mode-pill" class="pill">Mode: —</div>
+      <div id="progress-pill" class="pill">Progress: —</div>
+      <div id="timer-pill" class="pill">Time: —</div>
+    </div>
+
+    <div class="card big">
+      <div id="question" class="question">—</div>
+      <div id="answer" class="answer">0</div>
+      <div id="feedback" class="feedback"></div>
+    </div>
+
+    <div id="numpad" class="numpad"></div>
+
+    <button id="end" class="btn danger">End Session</button>
+  </section>
+
+  <!-- DASHBOARD POPUP MODAL (was main page before) -->
+  <div id="dashboard-modal" class="modal hidden" aria-hidden="true">
+    <div id="dashboard-backdrop" class="modal-backdrop"></div>
+
+    <div class="modal-card dashboard-card">
+      <div class="modal-head">
+        <div>
+          <h2>Dashboard</h2>
+          <div id="summary" class="muted">Attempts: — • Accuracy: — • Avg time: — • Buzzer avg: —</div>
+        </div>
+        <button id="close-dashboard" class="btn icon" aria-label="Close dashboard">✕</button>
+      </div>
+
+      <div id="dashboard" class="dashboard-body">
+        <div id="chart-accuracy" class="chart"></div>
+        <div id="chart-attempts" class="chart"></div>
+        <div id="chart-speed" class="chart"></div>
+        <div id="chart-badges" class="chart"></div>
       </div>
     </div>
   </div>
