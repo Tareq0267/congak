@@ -86,14 +86,11 @@ Your data never leaves your device.
 ### Option 2: Local server (recommended)
 ```bash
 python -m http.server
+```
 Then open:
-
-arduino
-Copy code
 http://localhost:8000
 📈 How Accuracy Is Calculated
-text
-Copy code
+
 accuracy = correct_answers / total_answers
 Daily stats are merged, so multiple sessions in the same day count toward the same daily summary.
 
