@@ -9,16 +9,26 @@
 }
 
 *{ box-sizing:border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+/* ✅ Make background continuous (no seams / black bands) */
+html, body{
+  min-height: 100%;
   background: radial-gradient(900px 600px at 15% 10%, rgba(92,124,250,.28), transparent 60%),
               radial-gradient(900px 600px at 85% 25%, rgba(34,211,238,.18), transparent 60%),
               var(--bg);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--text);
   padding: 14px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  min-height: 100vh;
 }
+
 
 .hidden { display:none !important; }
 .muted { color: var(--muted); }
@@ -237,23 +247,27 @@ strong { color: var(--text); }
 .numpad button:active{ transform: translateY(1px); }
 
 /* ---------- Modal (Dashboard) ---------- */
+/* ✅ Fix: modal scrolls naturally without squashing charts */
 .modal{
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: block;              /* allow natural scrolling */
+  overflow-y: auto;            /* scroll the whole modal */
   padding: 14px;
   z-index: 50;
 }
+
 .modal-backdrop{
-  position:absolute;
+  position: fixed;             /* fixed so it covers even while scrolling */
   inset:0;
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(10px);
 }
+
 .modal-card{
   position: relative;
   width: min(720px, 100%);
+  margin: 0 auto;              /* center */
   background: rgba(15,20,34,.85);
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 18px;
@@ -261,6 +275,7 @@ strong { color: var(--text); }
   padding: 14px;
   z-index: 1;
 }
+
 .modal-head{
   display:flex;
   justify-content:space-between;
@@ -278,6 +293,7 @@ strong { color: var(--text); }
   gap: 14px;
   margin-top: 10px;
 }
+
 .chart{
   width: 100%;
   height: 240px;
@@ -325,4 +341,16 @@ strong { color: var(--text); }
   60%  { transform: translateX(8px); }
   75%  { transform: translateX(-4px); }
   100% { transform: translateX(0); }
+}
+
+/* ✅ Keep these selectors (don’t remove), but neutralize the old “squash” behavior */
+.modal-card.dashboard-card{
+  max-height: none;
+  overflow: visible;
+}
+
+.dashboard-body{
+  overflow: visible;
+  max-height: none;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scrolling */
 }
