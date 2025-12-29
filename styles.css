@@ -372,3 +372,13 @@ strong { color: var(--text); }
   flex-direction: column;
   line-height: 1.05;
 }
+
+.mode-help{
+  opacity: .85;
+  font-size: 12px;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  text-align: center  ;
+}
+

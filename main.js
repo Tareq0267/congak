@@ -812,3 +812,23 @@ async function renderChartsAndSummary() {
   // Dashboard will render when opened (popup)
   // But if user opens it immediately, we’ll be ready.
 })();
+
+/* --------------------- mode helper --------------------- */
+const modeHelp = document.getElementById("mode-help");
+const modeSelect = document.getElementById("mode");
+
+function updateModeHelp(){
+  if(modeSelect.value === "kumon"){
+    modeHelp.textContent =
+      "Focused practice. Finish 20 questions with an emphasis on accuracy.";
+  } else if(modeSelect.value === "endless"){
+    modeHelp.textContent =
+      "Open-ended practice. Go at your own pace and stop anytime.";
+  } else if(modeSelect.value === "buzzer"){
+    modeHelp.textContent =
+      "Speed challenge. Solve as many questions as possible in 60 seconds.";
+  }
+}
+
+modeSelect.addEventListener("change", updateModeHelp);
+updateModeHelp();
