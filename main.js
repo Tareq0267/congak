@@ -265,6 +265,29 @@ function playFeedbackAnimation(isCorrect) {
   }, 500);
 }
 
+/* --------------------- Sound Effects --------------------- */
+const soundsEnabledKey = "sounds_enabled";
+
+const Sound = {
+  enabled: true,
+  correct: new Audio("sounds/correct.mp3"),
+  wrong: new Audio("sounds/wrong.mp3"),
+  end: new Audio("sounds/end.mp3"),
+};
+
+Object.values(Sound).forEach(a => {
+  if (a instanceof Audio) {
+    a.preload = "auto";
+    a.volume = 0.5;
+  }
+});
+
+// Load user preference
+(async function loadSoundPref(){
+  const saved = await getMeta(soundsEnabledKey, true);
+  Sound.enabled = saved !== false;
+})();
+
 /* --------------------- Dashboard modal controls --------------------- */
 let dashboardDirty = true;
 
@@ -482,6 +505,14 @@ function submitAnswer() {
   const elapsed = performance.now() - qStartMs;
   const userAnswer = Number(buffer);
   const isCorrect = userAnswer === currentQ.answer;
+
+  // play sound
+  if (Sound.enabled) {
+    const s = isCorrect ? Sound.correct : Sound.wrong;
+    s.currentTime = 0;
+    s.play().catch(() => {});
+  }
+
   playFeedbackAnimation(isCorrect);
 
   session.total += 1;
@@ -638,6 +669,12 @@ async function endSession(reason = "Session ended") {
     await renderChartsAndSummary();
     resizeChartsSoon();
     dashboardDirty = false;
+  }
+
+  // play end sound
+  if (Sound.enabled) {
+    Sound.end.currentTime = 0;
+    Sound.end.play().catch(() => {});
   }
 
   alert(
