@@ -227,6 +227,21 @@ const openDashboardBtn = document.getElementById("open-dashboard");
 const closeDashboardBtn = document.getElementById("close-dashboard");
 const dashboardBackdrop = document.getElementById("dashboard-backdrop");
 
+/* ✅ End modal (NEW) */
+const endModal = document.getElementById("end-modal");
+const endBackdrop = document.getElementById("end-backdrop");
+const closeEndBtn = document.getElementById("close-end");
+const endCloseBtn = document.getElementById("end-close");
+const endOpenDashboardBtn = document.getElementById("end-open-dashboard");
+
+const endReasonTitle = document.getElementById("end-reason-title");
+const endReasonSub = document.getElementById("end-reason-sub");
+const endModeEl = document.getElementById("end-mode");
+const endAnsweredEl = document.getElementById("end-answered");
+const endAccuracyEl = document.getElementById("end-accuracy");
+const endAvgEl = document.getElementById("end-avg");
+const endBadgesEl = document.getElementById("end-badges");
+
 /* Game UI */
 const questionEl = document.getElementById("question");
 const answerEl = document.getElementById("answer");
@@ -310,7 +325,32 @@ closeDashboardBtn?.addEventListener("click", closeDashboard);
 dashboardBackdrop?.addEventListener("click", closeDashboard);
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeDashboard();
+  if (e.key === "Escape") {
+    closeDashboard();
+    closeEndModal();
+  }
+});
+
+/* --------------------- ✅ End modal controls (NEW) --------------------- */
+function openEndModal() {
+  if (!endModal) return;
+  endModal.classList.remove("hidden");
+  endModal.setAttribute("aria-hidden", "false");
+}
+
+function closeEndModal() {
+  if (!endModal) return;
+  endModal.classList.add("hidden");
+  endModal.setAttribute("aria-hidden", "true");
+}
+
+closeEndBtn?.addEventListener("click", closeEndModal);
+endBackdrop?.addEventListener("click", closeEndModal);
+endCloseBtn?.addEventListener("click", closeEndModal);
+
+endOpenDashboardBtn?.addEventListener("click", () => {
+  closeEndModal();
+  openDashboard();
 });
 
 /* --------------------- Sections --------------------- */
@@ -561,6 +601,33 @@ function computeStreakWithDate(allStats, endingDateISO) {
   return streak;
 }
 
+/* ✅ Fill end modal (NEW) */
+function fillEndModal(reason, sessionAccuracy, sessionAvgMs, date, newlyEarned) {
+  if (!endModal) return;
+
+  const mode = session?.mode || "—";
+  const difficulty = session?.difficulty || "—";
+
+  const modeLabel = mode === "buzzer" ? "Buzzer Beater (1:00)" : (mode === "kumon" ? "Kumon (20)" : "Endless");
+
+  endReasonTitle.textContent = "Session Complete";
+  endReasonSub.textContent = reason;
+
+  endModeEl.textContent = `${modeLabel} • ${difficulty}`;
+  endAnsweredEl.textContent = `${session.total} (${session.correct} correct)`;
+  endAccuracyEl.textContent = `${Math.round(sessionAccuracy * 100)}%`;
+  endAvgEl.textContent = `${msToSec(sessionAvgMs)}s`;
+
+  if (newlyEarned) {
+    endBadgesEl.classList.remove("hidden");
+    endBadgesEl.textContent = `🏅 New badges: ${newlyEarned} • Saved to ${date}`;
+  } else {
+    endBadgesEl.classList.add("hidden");
+    endBadgesEl.textContent = "";
+  }
+}
+
+/* --------------------- endSession (ONLY CHANGE: replace alert with modal) --------------------- */
 async function endSession(reason = "Session ended") {
   stopCountdown();
 
@@ -655,11 +722,6 @@ async function endSession(reason = "Session ended") {
 
   await putDailyStat(base);
 
-  // reset session + return to setup (dashboard is now a popup)
-  session = null;
-  showSetup();
-  renderBadgeList(unlockedAfter);
-
   // mark dashboard as needing refresh
   dashboardDirty = true;
 
@@ -677,11 +739,16 @@ async function endSession(reason = "Session ended") {
     Sound.end.play().catch(() => {});
   }
 
-  alert(
-    `${reason}\n\n` +
-    `Session: ${Math.round(sessionAccuracy * 100)}% • Avg ${msToSec(sessionAvgMs)}s\n` +
-    `Saved to ${date}${newlyEarned ? `\nNew badges: ${newlyEarned}` : ""}`
-  );
+  // ✅ show setup + badges (unchanged behavior)
+  showSetup();
+  renderBadgeList(unlockedAfter);
+
+  // ✅ REPLACE alert(...) with end modal (ONLY requested change)
+  fillEndModal(reason, sessionAccuracy, sessionAvgMs, date, newlyEarned);
+  openEndModal();
+
+  // finally clear session
+  session = null;
 }
 
 /* --------------------- Start session from main setup --------------------- */

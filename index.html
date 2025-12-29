@@ -16,7 +16,6 @@
       <img src="assets/logo_background.png" alt="Congak logo" class="brand-logo" />
     </div>
 
-
     <button id="open-dashboard" class="btn ghost">Dashboard</button>
   </header>
 
@@ -38,7 +37,6 @@
         <div id="mode-help" class="mode-help muted">
           Focused practice. Finish 20 questions with an emphasis on accuracy.
         </div>
-
 
         <label class="label">Difficulty</label>
         <select id="difficulty" class="input">
@@ -109,6 +107,49 @@
         <div id="chart-attempts" class="chart"></div>
         <div id="chart-speed" class="chart"></div>
         <div id="chart-badges" class="chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ END SCREEN MODAL (NEW) -->
+  <div id="end-modal" class="modal hidden" aria-hidden="true">
+    <div id="end-backdrop" class="modal-backdrop"></div>
+
+    <div class="modal-card end-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="end-reason-title">Session Complete</h2>
+          <div id="end-reason-sub" class="muted">—</div>
+        </div>
+        <button id="close-end" class="btn icon" aria-label="Close end screen">✕</button>
+      </div>
+
+      <div class="end-body">
+        <div class="end-grid">
+          <div class="end-stat">
+            <div class="muted end-k">Mode</div>
+            <div id="end-mode" class="end-v">—</div>
+          </div>
+          <div class="end-stat">
+            <div class="muted end-k">Answered</div>
+            <div id="end-answered" class="end-v">—</div>
+          </div>
+          <div class="end-stat">
+            <div class="muted end-k">Accuracy</div>
+            <div id="end-accuracy" class="end-v">—</div>
+          </div>
+          <div class="end-stat">
+            <div class="muted end-k">Avg time</div>
+            <div id="end-avg" class="end-v">—</div>
+          </div>
+        </div>
+
+        <div id="end-badges" class="muted end-badges hidden">—</div>
+      </div>
+
+      <div class="end-actions">
+        <button id="end-open-dashboard" class="btn ghost">Open Dashboard</button>
+        <button id="end-close" class="btn primary">Back to Setup</button>
       </div>
     </div>
   </div>

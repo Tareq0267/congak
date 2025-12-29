@@ -382,3 +382,52 @@ strong { color: var(--text); }
   text-align: center  ;
 }
 
+/* ---------- End Screen Modal ---------- */
+.modal-card.end-card{
+  width: min(560px, 100%);
+}
+
+.end-body{
+  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+
+.end-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.end-stat{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.end-k{
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.end-v{
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.end-badges{
+  font-size: 12px;
+  text-align: center;
+  opacity: .9;
+}
+
+.end-actions{
+  margin-top: 14px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+
