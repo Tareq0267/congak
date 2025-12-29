@@ -1,6 +1,6 @@
-# 📱 Pocket Kumon / Pocket Al-Khwarizmi
+# 📱 Congak / Pocket Al-Khwarizmi
 
-**Pocket Kumon** (a.k.a. **Pocket Al-Khwarizmi**) is a mobile-first mental math trainer inspired by **Kumon** and modern learning apps like **Duolingo**.
+**Congak** (a.k.a. **Pocket Al-Khwarizmi**) is a mobile-first mental math trainer inspired by **Kumon** and modern learning apps like **Duolingo**.
 
 It focuses on **speed, accuracy, and consistency**, with offline support, daily statistics, and a lightweight reward system — all running entirely in the browser.
 

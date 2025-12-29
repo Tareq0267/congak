@@ -1,4 +1,4 @@
-const CACHE_NAME = "pocket-kumon-v1";
+const CACHE_NAME = "congak-v1";
 const ASSETS = [
   "./",
   "./index.html",
