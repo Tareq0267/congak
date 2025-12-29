@@ -354,3 +354,21 @@ strong { color: var(--text); }
   max-height: none;
   -webkit-overflow-scrolling: touch; /* smooth iOS scrolling */
 }
+
+.brand{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo{
+  width: 150px;
+  opacity: 0.85;
+  /* height: 150px; */
+}
+
+.brand-text{
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
