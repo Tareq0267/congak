@@ -29,7 +29,7 @@ It focuses on **speed, accuracy, and consistency**, with offline support, daily 
 - Red glow + shake for wrong answers
 - Immediate correction shown
 
-### 📊 Dashboard (ECharts)
+### 📊 Statistics (ECharts)
 - Accuracy over the last 7 days
 - Attempts per day
 - Average response time

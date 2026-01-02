@@ -246,7 +246,7 @@ strong { color: var(--text); }
 }
 .numpad button:active{ transform: translateY(1px); }
 
-/* ---------- Modal (Dashboard) ---------- */
+/* ---------- Modal (Statistics) ---------- */
 /* ✅ Fix: modal scrolls naturally without squashing charts */
 .modal{
   position: fixed;

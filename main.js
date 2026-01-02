@@ -1,6 +1,6 @@
 /***********************
  * Mental Math v1.3 (fixed charts + modal behavior)
- * - Dashboard is the home screen
+ * - Statistics is the home screen
  * - Session setup is a modal popup
  * - Fix: modal hide works reliably
  * - Fix: ECharts updates correctly after sessions (init once + resize after show)
@@ -17,7 +17,7 @@
  * v1.6 additions:
  * - Switched positions:
  *   -> Main page is Session Setup
- *   -> Dashboard is now a popup modal
+ *   -> Statistics is now a popup modal
  ************************/
 
 /* --------------------- Utils --------------------- */
@@ -221,10 +221,10 @@ function genQuestion(ops, difficulty) {
 const setupSec = document.getElementById("setup");
 const gameSec = document.getElementById("game");
 
-/* Dashboard modal */
+/* Statistics modal */
 const dashboardModal = document.getElementById("dashboard-modal");
-const openDashboardBtn = document.getElementById("open-dashboard");
-const closeDashboardBtn = document.getElementById("close-dashboard");
+const openStatisticsBtn = document.getElementById("open-dashboard");
+const closeStatisticsBtn = document.getElementById("close-dashboard");
 const dashboardBackdrop = document.getElementById("dashboard-backdrop");
 
 /* ✅ End modal (NEW) */
@@ -232,7 +232,7 @@ const endModal = document.getElementById("end-modal");
 const endBackdrop = document.getElementById("end-backdrop");
 const closeEndBtn = document.getElementById("close-end");
 const endCloseBtn = document.getElementById("end-close");
-const endOpenDashboardBtn = document.getElementById("end-open-dashboard");
+const endOpenStatisticsBtn = document.getElementById("end-open-dashboard");
 
 const endReasonTitle = document.getElementById("end-reason-title");
 const endReasonSub = document.getElementById("end-reason-sub");
@@ -303,10 +303,10 @@ Object.values(Sound).forEach(a => {
   Sound.enabled = saved !== false;
 })();
 
-/* --------------------- Dashboard modal controls --------------------- */
+/* --------------------- Statistics modal controls --------------------- */
 let dashboardDirty = true;
 
-function openDashboard() {
+function openStatistics() {
   dashboardModal.classList.remove("hidden");
   dashboardModal.setAttribute("aria-hidden", "false");
   ensureCharts();
@@ -315,18 +315,18 @@ function openDashboard() {
   dashboardDirty = false;
 }
 
-function closeDashboard() {
+function closeStatistics() {
   dashboardModal.classList.add("hidden");
   dashboardModal.setAttribute("aria-hidden", "true");
 }
 
-openDashboardBtn?.addEventListener("click", openDashboard);
-closeDashboardBtn?.addEventListener("click", closeDashboard);
-dashboardBackdrop?.addEventListener("click", closeDashboard);
+openStatisticsBtn?.addEventListener("click", openStatistics);
+closeStatisticsBtn?.addEventListener("click", closeStatistics);
+dashboardBackdrop?.addEventListener("click", closeStatistics);
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    closeDashboard();
+    closeStatistics();
     closeEndModal();
   }
 });
@@ -348,9 +348,9 @@ closeEndBtn?.addEventListener("click", closeEndModal);
 endBackdrop?.addEventListener("click", closeEndModal);
 endCloseBtn?.addEventListener("click", closeEndModal);
 
-endOpenDashboardBtn?.addEventListener("click", () => {
+endOpenStatisticsBtn?.addEventListener("click", () => {
   closeEndModal();
-  openDashboard();
+  openStatistics();
 });
 
 /* --------------------- Sections --------------------- */
@@ -876,7 +876,7 @@ async function renderChartsAndSummary() {
   const unlocked = await getUnlockedBadgeIds();
   renderBadgeList(unlocked);
 
-  // Dashboard will render when opened (popup)
+  // Statistics will render when opened (popup)
   // But if user opens it immediately, we’ll be ready.
 })();
 
